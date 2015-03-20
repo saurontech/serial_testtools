@@ -1,4 +1,4 @@
-all: mctrl openclose poll qfsize stress reconn
+all: mctrl openclose poll qfsize stress reconn timeout
 
 mctrl: mctrl.c
 	gcc -Wall $^ -o $@
@@ -12,6 +12,8 @@ stress: stress.c
 	gcc -Wall $^ -o $@
 reconn: reconn.c
 	gcc -Wall $^ -o $@
+timeout: timeout.c
+	gcc -Wall $^ -o $@
 clean:
 	rm -f mctrl
 	rm -f openclose
@@ -19,3 +21,4 @@ clean:
 	rm -f qfsize
 	rm -f stress
 	rm -f reconn
+	rm -f timeout
