@@ -17,6 +17,39 @@
 char buf [1024];
 char tmpbuf[1024];
 
+
+#define DATALEN  1000
+
+int _tty_flush(int fd)
+{
+	int clnlen;
+	fd_set rfds;
+	struct timeval tv;
+	int retval;
+	int rlen;
+
+	clnlen = 0;
+	
+	do{
+		FD_ZERO(&rfds);
+		FD_SET(fd, &rfds);
+		tv.tv_sec = 3;
+		tv.tv_usec = 0;
+		retval = select( fd+1 , &rfds, 0, 0, &tv);
+		if(retval == 0){
+			break;
+		}
+		rlen = read(fd, tmpbuf, DATALEN);
+		if(rlen <= 0){
+			printf("error durring clean\n");
+			exit(0);
+		}
+		clnlen += rlen;
+	}while(1);
+
+	return clnlen;
+}
+
 int main(int argc, char **argv)
 {
 	int fd;
@@ -66,8 +99,9 @@ int main(int argc, char **argv)
 	printf("ospeed %d ispeed %d ret = %d\n", newtio.c_ospeed, newtio.c_ispeed, ret);
 	ret = ioctl(fd, TCGETS2, &newtio);
 	printf("ospeed %d ispeed %d ret = %d\n", newtio.c_ospeed, newtio.c_ispeed, ret);
+	
+	 _tty_flush(fd);
 
-#define DATALEN  1000
 	wlen = 0;
 
 	do{
