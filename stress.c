@@ -36,7 +36,9 @@ int main(int argc, char **argv)
 	int total_rx;
 	int clnlen;
 	int baud;
+	int stop_tx;
 	char * dev;
+	char *sel_str;
 
 	if(argc != 3){
 		printf("%s [tty_path] [baud]\n", argv[0]);
@@ -83,7 +85,8 @@ int main(int argc, char **argv)
 	ret = ioctl(fd, TCSETS2, &newtio);
 //	printf("ospeed %d ispeed %d ret = %d\n", newtio.c_ospeed, newtio.c_ispeed, ret);
 	ret = ioctl(fd, TCGETS2, &newtio);
-//	printf("ospeed %d ispeed %d ret = %d\n", newtio.c_ospeed, newtio.c_ispeed, ret);
+	printf("ospeed %d ispeed %d ret = %d\n", newtio.c_ospeed, newtio.c_ispeed, ret);
+	printf("press any key to stop tx\n");
 
 #define DATALEN  1000
 	
@@ -129,6 +132,9 @@ int main(int argc, char **argv)
 	newtio.c_ispeed = baud;
 	ret = ioctl(fd, TCSETS2, &newtio);
 	printf("ospeed %d ispeed %d ret = %d\n", newtio.c_ospeed, newtio.c_ispeed, ret);
+
+	sel_str = "select nothing";
+	stop_tx = 0;
 	
 
 	do{
@@ -137,15 +143,23 @@ int main(int argc, char **argv)
 		FD_ZERO(&wfds);
 		FD_ZERO(&rfds);
 		FD_SET(fd, &rfds);
-		
-		FD_SET(fd, &wfds);
+		if(stop_tx == 0){
+			FD_SET(STDIN_FILENO, &rfds);
+			FD_SET(fd, &wfds);
+		}
 
 		tv.tv_sec = 30;
 		tv.tv_usec = 0;
 		retval = select( fd+1 , &rfds, &wfds, 0, &tv);
 		if(retval == 0){
-			printf("select nothing\n");
+			printf("\n%s\n", sel_str);
 			break;
+		}
+
+		if(FD_ISSET(STDIN_FILENO, &rfds)){
+			printf("\nstopping tx\n");
+			sel_str = "test ended";
+			stop_tx = 1;
 		}
 
 		if(FD_ISSET(fd, &wfds)){
