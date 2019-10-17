@@ -144,11 +144,12 @@ int main(int argc, char **argv)
 	int ret;
 	int count;
 	int clear;
+	int target;
 	struct termios2 newtio;
 	count = 0;
 	
-	if(argc != 2){
-		printf("%s [tty]\n", argv[0]);
+	if(argc != 3 ){
+		printf("%s [tty] [loop count(0=infinite)]\n", argv[0]);
 		return 0;
 	}
 
@@ -164,8 +165,9 @@ int main(int argc, char **argv)
 	}
 
 	printf("done init\n");
+	target = atoi(argv[2]);
 
-	while(count < 100){
+	while((target == 0)?1:(count < target)){
 		count++;
 
 		fd = open(argv[1], O_RDWR);
@@ -204,6 +206,8 @@ int main(int argc, char **argv)
 
 		close(fd);
 	}
+
+	printf("\n");
 
 	return 0;
 }
