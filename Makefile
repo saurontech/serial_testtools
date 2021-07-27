@@ -17,6 +17,9 @@ timeout: timeout.c
 tiocmiwait: tiocmiwait.c
 	gcc -Wall $^ -o $@
 
+rxstopstart: rxstopstart.c
+	gcc -Wall $^ -o $@
+
 clean:
 	rm -f mctrl
 	rm -f openclose
@@ -26,3 +29,4 @@ clean:
 	rm -f reconn
 	rm -f timeout
 	rm -f tiocmiwait
+	rm -f rxstopstart
