@@ -1,4 +1,4 @@
-all: mctrl openclose poll qfsize stress reconn timeout tiocmiwait
+all: mctrl openclose poll qfsize stress reconn timeout tiocmiwait rxstopstart
 
 mctrl: mctrl.c
 	gcc -Wall $^ -o $@
