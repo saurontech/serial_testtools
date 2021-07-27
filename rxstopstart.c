@@ -72,6 +72,7 @@ int main(int argc, char **argv)
 	newtio.c_lflag &= ~(ECHO|ICANON|ISIG);
 	newtio.c_cflag &= ~CBAUD;
 	newtio.c_cflag |= BOTHER|CRTSCTS;
+#define _softwareflow
 #ifdef _softwareflow
 	newtio.c_cflag &= ~(CRTSCTS);
 	newtio.c_iflag |= (IXON|IXOFF);
