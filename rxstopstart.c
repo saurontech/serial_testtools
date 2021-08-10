@@ -18,6 +18,13 @@
 char buf [1024];
 char tmpbuf[1024];
 
+void showHelp(char **argv)
+{
+	printf("%s -f [xonxoff|rtscts] -d [tty_path] -b [baudrate]\n", argv[0]);
+	printf("default: -f = xonxoff -b 9600\n");
+	return;
+}
+
 int main(int argc, char **argv)
 {
 	int fd;
@@ -38,15 +45,42 @@ int main(int argc, char **argv)
 	int clnlen;
 	int rd_size;
 	int stop_rx;
+	int softwareflow;
 	char * dev;
-	char * sel_str;
 
-	if(argc != 2){
-		printf("%s [tty_path]\n", argv[0]);
-		return 0;
+	dev = 0;
+	softwareflow = 0;
+	int opt;
+	int baud = 9600;
+
+	while ((opt = getopt(argc, argv, "d:f:b:")) != -1) {
+		switch (opt) {
+			case 'b':
+				baud = atoi(optarg);
+				printf("custom baudrate = %d\n", baud);
+				break;
+			case 'd':
+				dev = optarg;
+				break;
+			case 'f':
+				if(strcmp(optarg, "xonxoff") == 0){
+					printf("software flow control\n");
+					softwareflow = 1;
+				}else{
+					printf("RTS/CTS flow control\n");
+				}
+				break;
+			default: /* '?' */
+				showHelp(argv);
+				exit(EXIT_FAILURE);
+
+		}	
 	}
 
-	dev = argv[1];
+	if(dev == 0){
+		showHelp(argv);
+		exit(EXIT_FAILURE);
+	}
 
 	for(i = 0; i < 1024; i++){
 		if(i == 0){
@@ -72,13 +106,15 @@ int main(int argc, char **argv)
 	newtio.c_lflag &= ~(ECHO|ICANON|ISIG);
 	newtio.c_cflag &= ~CBAUD;
 	newtio.c_cflag |= BOTHER|CRTSCTS;
-#define _softwareflow
-#ifdef _softwareflow
-	newtio.c_cflag &= ~(CRTSCTS);
-	newtio.c_iflag |= (IXON|IXOFF);
-#endif
-	newtio.c_ospeed = 9600;
-	newtio.c_ispeed = 9600;
+
+	if(softwareflow){
+		newtio.c_cflag &= ~(CRTSCTS);
+		newtio.c_iflag |= (IXON|IXOFF);
+	}else{
+		newtio.c_iflag &= ~(IXON|IXOFF);
+	}
+	newtio.c_ospeed = baud;
+	newtio.c_ispeed = baud;
 	ret = ioctl(fd, TCSETS2, &newtio);
 //	printf("ospeed %d ispeed %d ret = %d\n", newtio.c_ospeed, newtio.c_ispeed, ret);
 	ret = ioctl(fd, TCGETS2, &newtio);
@@ -118,7 +154,7 @@ int main(int argc, char **argv)
 		rd_size = 1;
 	}
 
-	sel_str = "select nothing";
+	//sel_str = "select nothing";
 	stop_rx = 1;
 	//int write_loop_len = 0;
 	
@@ -148,7 +184,7 @@ int main(int argc, char **argv)
 			//break;
 			//char clear[128];
 			//printf("\nstopping rx\n");
-			sel_str = "test ended";
+			//sel_str = "test ended";
 			stop_rx = !stop_rx;
 			//read(STDIN_FILENO, clear, sizeof(clear));
 		}
