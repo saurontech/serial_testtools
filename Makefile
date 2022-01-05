@@ -1,4 +1,4 @@
-all: mctrl openclose poll qfsize stress reconn timeout tiocmiwait rxstopstart
+all: mctrl openclose poll qfsize stress reconn timeout tiocmiwait rxstopstart roundtrip
 
 mctrl: mctrl.c
 	gcc -Wall $^ -o $@
@@ -20,6 +20,9 @@ tiocmiwait: tiocmiwait.c
 rxstopstart: rxstopstart.c
 	gcc -Wall $^ -o $@
 
+roundtrip: roundtrip.c
+	gcc -Wall $^ -o $@
+
 clean:
 	rm -f mctrl
 	rm -f openclose
@@ -30,3 +33,4 @@ clean:
 	rm -f timeout
 	rm -f tiocmiwait
 	rm -f rxstopstart
+	rm -f roundtrip
