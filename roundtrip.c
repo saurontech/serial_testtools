@@ -19,6 +19,7 @@ char tmpbuf[1024];
 
 
 #define DATALEN  1000
+#define SELTIME 1000
 
 int _tty_flush(int fd)
 {
@@ -130,8 +131,8 @@ int main(int argc, char **argv)
 		}
 
 
-		tv.tv_sec = 1;
-		tv.tv_usec = 0;
+		tv.tv_sec = (SELTIME)/1000;
+		tv.tv_usec = (SELTIME)%1000;
 		retval = select( fd+1 , &rfds, &wfds, 0, &tv);
 		if(retval == 0){
 			printf("select nothing\n");
@@ -164,7 +165,7 @@ int main(int argc, char **argv)
 			}
 			
 			left_tv = (tv.tv_sec * 1000) + (tv.tv_usec/1000);
-			roundtrip_tv = 1000 - left_tv; // select time is 1000 msecs:
+			roundtrip_tv = (SELTIME) - left_tv; // select time is 1000 msecs:
 			a_rt[a_index] = roundtrip_tv;
 			
 			if(r_cnt >= a_rt_cnt){
