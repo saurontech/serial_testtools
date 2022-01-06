@@ -175,6 +175,14 @@ int main(int argc, char **argv)
 					sum_rt += a_rt[i];
 				}
 				rt_average = sum_rt/a_rt_cnt;
+			}else{
+				int i;
+				int sum_rt;
+				sum_rt = 0;
+				for(i = 0; i < r_cnt; i++){
+					sum_rt += a_rt[i];
+				}
+				rt_average = sum_rt/r_cnt;
 			}
 			if(roundtrip_tv >= max_rt){
 				max_rt = roundtrip_tv;
