@@ -117,6 +117,7 @@ int main(int argc, char **argv)
 	int rt_average = 0;
 
 	int a_rt_cnt = (sizeof(a_rt)/sizeof(a_rt[0]));
+	rlen = 0;
 
 	do{
 		FD_ZERO(&wfds);
@@ -130,9 +131,10 @@ int main(int argc, char **argv)
 			FD_SET(fd, &wfds);
 		}
 
-
+		//printf("set time\n");
 		tv.tv_sec = (SELTIME)/1000;
-		tv.tv_usec = (SELTIME)%1000;
+		tv.tv_usec = ((SELTIME)%1000)*1000;
+
 		retval = select( fd+1 , &rfds, &wfds, 0, &tv);
 		if(retval == 0){
 			printf("select nothing\n");
@@ -141,6 +143,7 @@ int main(int argc, char **argv)
 		}
 
 		if(FD_ISSET(fd, &wfds)){
+			//printf("write\n");
 			wlen = write(fd, buf, m_wlen);
 			w_index++;
 			//printf("write len = %d\n", wlen);
@@ -149,7 +152,17 @@ int main(int argc, char **argv)
 			int left_tv;
 			int roundtrip_tv;
 			int a_index;
-			rlen = read(fd, tmpbuf, DATALEN);
+			int selectret;
+			//printf("read\n");
+			rlen = 0;
+			do{
+				rlen += read(fd, &tmpbuf[rlen], DATALEN - rlen);
+				if(rlen >= wlen){
+					break;
+				}
+				selectret = select(fd + 1, &rfds, 0, 0, &tv);
+			}while(selectret > 0);
+
 			a_index = r_cnt % a_rt_cnt;
 			r_cnt++;
 			diff = memcmp(tmpbuf, buf, rlen);
@@ -166,6 +179,7 @@ int main(int argc, char **argv)
 			
 			left_tv = (tv.tv_sec * 1000) + (tv.tv_usec/1000);
 			roundtrip_tv = (SELTIME) - left_tv; // select time is 1000 msecs:
+			//printf("a_index %d calculate rtv %d left tv %d\n", a_index, roundtrip_tv, left_tv);
 			a_rt[a_index] = roundtrip_tv;
 			
 			if(r_cnt >= a_rt_cnt){
@@ -185,6 +199,7 @@ int main(int argc, char **argv)
 				}
 				rt_average = sum_rt/r_cnt;
 			}
+			//printf("average tv %d\n", rt_average);
 			if(roundtrip_tv >= max_rt){
 				max_rt = roundtrip_tv;
 				max_rtindex = w_index;
