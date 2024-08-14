@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#include <math.h>
 //#include <termios.h>
 #include <asm-generic/termbits.h>
 
@@ -49,6 +50,19 @@ int _tty_flush(int fd)
 	}while(1);
 
 	return clnlen;
+}
+
+long double std_dev(unsigned long long * samples, int cnt, unsigned long long avg)
+{
+	int i;
+	long double tmp;
+	tmp = 0;
+	for(i = 0; i < cnt; i++){
+		tmp += powl(((long double)samples[i] - (long double)avg), 2);
+	}
+	tmp = (tmp/((long double)(cnt - 1)));
+	return sqrtl(tmp);
+
 }
 
 int main(int argc, char **argv)
@@ -109,12 +123,13 @@ int main(int argc, char **argv)
 
 	wlen = 0;
 	int w_index = 0;
-	int max_rt = 0;
+	unsigned long long max_rt = 0;
+	unsigned long long max = 0;
 	int max_rtindex = 0;
 
-	int a_rt[1024];
+	unsigned long long a_rt[40960];
 	int r_cnt = 0;
-	int rt_average = 0;
+	unsigned long long rt_average = 0;
 
 	int a_rt_cnt = (sizeof(a_rt)/sizeof(a_rt[0]));
 	rlen = 0;
@@ -123,9 +138,9 @@ int main(int argc, char **argv)
 		FD_ZERO(&wfds);
 		FD_ZERO(&rfds);
 		FD_SET(fd, &rfds);
-		printf("\r");
-		printf("[%d] round_trip max %d max_index %d average %d", w_index, max_rt, max_rtindex, rt_average);
-		fflush(stdout);
+		
+		//
+		//printf("\n");
 		
 		if(wlen == 0 ){
 			FD_SET(fd, &wfds);
@@ -147,10 +162,20 @@ int main(int argc, char **argv)
 			wlen = write(fd, buf, m_wlen);
 			w_index++;
 			//printf("write len = %d\n", wlen);
+			continue;
 		}
+		printf("\r");
+		printf("[%d|%d] round_trip max %llu(%llu.%llu) max_index %d average %llu.%llu stddev %Lf", w_index, r_cnt,
+					max_rt/1000, 
+					max/1000, max%1000, 
+					max_rtindex, 
+					rt_average/1000, rt_average%1000, 
+		std_dev(a_rt, ((r_cnt >a_rt_cnt)?a_rt_cnt:r_cnt), rt_average) );
+		fflush(stdout);
+
 		if(FD_ISSET(fd, &rfds)){
-			int left_tv;
-			int roundtrip_tv;
+			unsigned long long left_tv;
+			unsigned long long roundtrip_tv;
 			int a_index;
 			int selectret;
 			//printf("read\n");
@@ -165,6 +190,7 @@ int main(int argc, char **argv)
 
 			a_index = r_cnt % a_rt_cnt;
 			r_cnt++;
+			//r_cnt %= a_rt_cnt;
 			diff = memcmp(tmpbuf, buf, rlen);
 			
 			wlen = 0;
@@ -177,25 +203,33 @@ int main(int argc, char **argv)
 				break;
 			}
 			
-			left_tv = (tv.tv_sec * 1000) + (tv.tv_usec/1000);
-			roundtrip_tv = (SELTIME) - left_tv; // select time is 1000 msecs:
-			//printf("a_index %d calculate rtv %d left tv %d\n", a_index, roundtrip_tv, left_tv);
+			left_tv = (tv.tv_sec * 1000000) + (tv.tv_usec);
+			roundtrip_tv = (SELTIME * 1000) - left_tv; // select time is 1000 msecs:
+			//printf("a_index %d calculate rtv %llu left tv %llu\n", a_index, roundtrip_tv, left_tv);
 			a_rt[a_index] = roundtrip_tv;
 			
 			if(r_cnt >= a_rt_cnt){
 				int i;
-				int sum_rt;
+				unsigned long long sum_rt;
 				sum_rt = 0;
+				max = 0;
 				for(i = 0; i < a_rt_cnt; i++){
 					sum_rt += a_rt[i];
+					if(max < a_rt[i]){
+						max = a_rt[i];
+					}
 				}
 				rt_average = sum_rt/a_rt_cnt;
 			}else{
 				int i;
-				int sum_rt;
+				unsigned long long sum_rt;
 				sum_rt = 0;
+				max = 0;
 				for(i = 0; i < r_cnt; i++){
 					sum_rt += a_rt[i];
+					if(max < a_rt[i]){
+						max = a_rt[i];
+					}
 				}
 				rt_average = sum_rt/r_cnt;
 			}

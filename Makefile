@@ -21,7 +21,7 @@ rxstopstart: rxstopstart.c
 	gcc -Wall $^ -o $@
 
 roundtrip: roundtrip.c
-	gcc -Wall $^ -o $@
+	gcc -Wall $^ -o $@ -lm
 
 stress_plat: stress_plat.c
 	gcc -Wall $^ -o $@ -lpthread
