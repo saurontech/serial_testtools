@@ -162,18 +162,7 @@ int main(int argc, char **argv)
 			wlen = write(fd, buf, m_wlen);
 			w_index++;
 			//printf("write len = %d\n", wlen);
-			continue;
-		}
-		printf("\r");
-		printf("[%d|%d] round_trip max %llu(%llu.%llu) max_index %d average %llu.%llu stddev %Lf", w_index, r_cnt,
-					max_rt/1000, 
-					max/1000, max%1000, 
-					max_rtindex, 
-					rt_average/1000, rt_average%1000, 
-		std_dev(a_rt, ((r_cnt >a_rt_cnt)?a_rt_cnt:r_cnt), rt_average) );
-		fflush(stdout);
-
-		if(FD_ISSET(fd, &rfds)){
+		}else if(FD_ISSET(fd, &rfds)){
 			unsigned long long left_tv;
 			unsigned long long roundtrip_tv;
 			int a_index;
@@ -239,6 +228,14 @@ int main(int argc, char **argv)
 				max_rtindex = w_index;
 			}
 		}
+		printf("\r");
+		printf("[%d|%d] round_trip max %llu(%llu.%llu) max_index %d average %llu.%llu stddev %Lf", w_index, r_cnt,
+					max_rt/1000, 
+					max/1000, max%1000, 
+					max_rtindex, 
+					rt_average/1000, rt_average%1000, 
+		std_dev(a_rt, ((r_cnt >a_rt_cnt)?a_rt_cnt:r_cnt), rt_average) );
+		fflush(stdout);
 
 		//sleep(2);
 	}while(1);
